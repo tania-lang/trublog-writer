@@ -1993,6 +1993,11 @@ def generate_cover_image(title: str, template_path: str = None) -> bytes:
             except:
                 pass
 
+    # Define text box area (used for both template and fallback)
+    margin = 80
+    rect_y1 = margin + 50
+    rect_y2 = img_height - margin - 50
+
     # Fallback: Create gradient background
     if img is None:
         img = Image.new('RGB', (img_width, img_height), (99, 102, 241))
@@ -2006,9 +2011,8 @@ def generate_cover_image(title: str, template_path: str = None) -> bytes:
             draw.line([(0, y), (img_width, y)], fill=(r, g, b))
 
         # Draw white rounded rectangle in center for text
-        margin = 80
-        rect_x1, rect_y1 = margin, margin + 50
-        rect_x2, rect_y2 = img_width - margin, img_height - margin - 50
+        rect_x1 = margin
+        rect_x2 = img_width - margin
 
         draw.rounded_rectangle(
             [(rect_x1, rect_y1), (rect_x2, rect_y2)],
