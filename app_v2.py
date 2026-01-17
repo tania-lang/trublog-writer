@@ -2022,27 +2022,32 @@ def generate_cover_image(title: str, template_path: str = None) -> bytes:
     else:
         draw = ImageDraw.Draw(img)
 
-    # Load font - try system fonts that work on Linux (Streamlit Cloud)
+    # Load font - try Inter Bold first (bundled with app), then system fonts
     font_size = 45
     font = None
     try:
-        # Linux fonts (Streamlit Cloud)
-        linux_fonts = [
+        # Inter Bold bundled with app (works on all platforms)
+        script_dir = Path(__file__).parent
+        inter_bold = script_dir / "Inter-Bold.ttf"
+
+        # Fallback fonts
+        fallback_fonts = [
+            # Linux fonts (Streamlit Cloud)
             "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
             "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
             "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-        ]
-        # Mac fonts (local development)
-        mac_fonts = [
-            "/Users/taniaagarwal/Library/Fonts/Inter-Bold.ttf",
-            "/Library/Fonts/Arial Bold.ttf",
-            "/System/Library/Fonts/Helvetica.ttc",
+            # Mac fonts
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
         ]
 
-        for fp in linux_fonts + mac_fonts:
-            if Path(fp).exists():
-                font = ImageFont.truetype(fp, font_size)
-                break
+        # Try Inter Bold first
+        if inter_bold.exists():
+            font = ImageFont.truetype(str(inter_bold), font_size)
+        else:
+            for fp in fallback_fonts:
+                if Path(fp).exists():
+                    font = ImageFont.truetype(fp, font_size)
+                    break
     except:
         pass
 
