@@ -1971,93 +1971,102 @@ def export_to_notion_format(blogs):
 
 
 def generate_cover_image(title: str, template_path: str = None) -> bytes:
-    """Generate cover image with blog title overlaid on template"""
-    # Default template path - Tutorial (1).png (with space)
-    if template_path is None:
-        template_path = "/Users/taniaagarwal/Downloads/Tutorial (1).png"
+    """Generate cover image with blog title - works on cloud deployment"""
+    img_width, img_height = 1200, 630
 
-    # Fallback options if primary doesn't exist
-    if not Path(template_path).exists():
-        fallbacks = [
-            "/Users/taniaagarwal/Downloads/Tutorial(1).png",
-            "/Users/taniaagarwal/Downloads/Tutorial.png"
-        ]
-        for fb in fallbacks:
-            if Path(fb).exists():
-                template_path = fb
-                break
+    # Create gradient background (Trupeer purple theme)
+    img = Image.new('RGB', (img_width, img_height), (99, 102, 241))  # #6366F1
 
-    # Load template image
-    try:
-        img = Image.open(template_path).convert('RGBA')
-    except FileNotFoundError:
-        # Create a fallback purple gradient image if template not found
-        img = Image.new('RGBA', (1200, 630), (112, 123, 229, 255))  # #707be5
-
+    # Add gradient effect
     draw = ImageDraw.Draw(img)
-    img_width, img_height = img.size
+    for y in range(img_height):
+        # Gradient from #6366F1 to #8B5CF6
+        r = int(99 + (139 - 99) * y / img_height)
+        g = int(102 + (92 - 102) * y / img_height)
+        b = int(241 + (246 - 241) * y / img_height)
+        draw.line([(0, y), (img_width, y)], fill=(r, g, b))
 
-    # Define the text box area (centered white box in template)
-    text_box_x = int(img_width * 0.1)
-    text_box_y = int(img_height * 0.25)
-    text_box_width = int(img_width * 0.8)
-    text_box_height = int(img_height * 0.4)
+    # Draw white rounded rectangle in center for text
+    margin = 80
+    rect_x1, rect_y1 = margin, margin + 50
+    rect_x2, rect_y2 = img_width - margin, img_height - margin - 50
 
-    # Try to load Inter BOLD font - prioritize bold variants for bold text
+    # Draw white box with slight transparency effect
+    draw.rounded_rectangle(
+        [(rect_x1, rect_y1), (rect_x2, rect_y2)],
+        radius=20,
+        fill=(255, 255, 255)
+    )
+
+    # Load font - try system fonts that work on Linux (Streamlit Cloud)
     font_size = 45
+    font = None
     try:
-        font_paths = [
-            # User fonts - Bold variants first
+        # Linux fonts (Streamlit Cloud)
+        linux_fonts = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+        ]
+        # Mac fonts (local development)
+        mac_fonts = [
             "/Users/taniaagarwal/Library/Fonts/Inter-Bold.ttf",
-            "/Users/taniaagarwal/Library/Fonts/Inter-ExtraBold.ttf",
-            "/Users/taniaagarwal/Library/Fonts/Inter-Black.ttf",
-            "/Users/taniaagarwal/Library/Fonts/Inter-SemiBold.ttf",
-            # System fonts - Bold variants
-            "/Library/Fonts/Inter-Bold.ttf",
-            "/Library/Fonts/Inter-ExtraBold.ttf",
-            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
             "/Library/Fonts/Arial Bold.ttf",
-            # Fallback bold fonts
-            "/System/Library/Fonts/SFNSText-Bold.otf",
-            "/System/Library/Fonts/Helvetica-Bold.ttc",
             "/System/Library/Fonts/Helvetica.ttc",
         ]
-        font = None
-        for fp in font_paths:
+
+        for fp in linux_fonts + mac_fonts:
             if Path(fp).exists():
                 font = ImageFont.truetype(fp, font_size)
                 break
-        if font is None:
-            font = ImageFont.load_default()
     except:
+        pass
+
+    if font is None:
+        # Use default font with larger size simulation
         font = ImageFont.load_default()
 
     # Wrap text to fit in the box
-    max_chars_per_line = 35
+    max_chars_per_line = 30
     wrapped_lines = textwrap.wrap(title, width=max_chars_per_line)
 
     # Limit to 3 lines max
     if len(wrapped_lines) > 3:
         wrapped_lines = wrapped_lines[:3]
-        wrapped_lines[2] = wrapped_lines[2][:max_chars_per_line-3] + "..."
+        if len(wrapped_lines[2]) > max_chars_per_line - 3:
+            wrapped_lines[2] = wrapped_lines[2][:max_chars_per_line-3] + "..."
 
-    # Calculate text positioning (center in the text box area)
-    line_height = font_size + 10
+    # Calculate text positioning
+    line_height = font_size + 15
     total_text_height = len(wrapped_lines) * line_height
 
-    # Starting Y position to center text vertically in box
-    current_y = text_box_y + (text_box_height - total_text_height) // 2
+    # Center text in white box
+    box_center_y = (rect_y1 + rect_y2) // 2
+    current_y = box_center_y - total_text_height // 2
 
     # Text color: #707be5 (Trupeer purple)
-    text_color = (112, 123, 229, 255)  # #707be5
+    text_color = (112, 123, 229)  # #707be5
 
     for line in wrapped_lines:
         # Get text bounding box for centering
-        bbox = draw.textbbox((0, 0), line, font=font)
-        text_width = bbox[2] - bbox[0]
+        try:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+        except:
+            text_width = len(line) * 20  # Fallback width estimate
+
         x = (img_width - text_width) // 2
         draw.text((x, current_y), line, font=font, fill=text_color)
         current_y += line_height
+
+    # Add "TruBlog Writer" watermark at bottom
+    try:
+        small_font = ImageFont.truetype(linux_fonts[0] if Path(linux_fonts[0]).exists() else mac_fonts[0], 16)
+    except:
+        small_font = font
+
+    watermark = "Created with TruBlog Writer"
+    draw.text((img_width // 2 - 80, img_height - 35), watermark, font=small_font, fill=(255, 255, 255, 180))
 
     # Save to bytes
     img_buffer = io.BytesIO()
