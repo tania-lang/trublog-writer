@@ -1973,30 +1973,50 @@ def export_to_notion_format(blogs):
 def generate_cover_image(title: str, template_path: str = None) -> bytes:
     """Generate cover image with blog title - works on cloud deployment"""
     img_width, img_height = 1200, 630
+    use_template = False
 
-    # Create gradient background (Trupeer purple theme)
-    img = Image.new('RGB', (img_width, img_height), (99, 102, 241))  # #6366F1
+    # Try to load template image from repo
+    template_paths = [
+        Path(__file__).parent / "template.png",  # Same folder as app
+        Path("template.png"),  # Current directory
+        Path("/mount/src/trublog-writer/template.png"),  # Streamlit Cloud path
+    ]
 
-    # Add gradient effect
-    draw = ImageDraw.Draw(img)
-    for y in range(img_height):
-        # Gradient from #6366F1 to #8B5CF6
-        r = int(99 + (139 - 99) * y / img_height)
-        g = int(102 + (92 - 102) * y / img_height)
-        b = int(241 + (246 - 241) * y / img_height)
-        draw.line([(0, y), (img_width, y)], fill=(r, g, b))
+    img = None
+    for tp in template_paths:
+        if tp.exists():
+            try:
+                img = Image.open(tp).convert('RGB')
+                img_width, img_height = img.size
+                use_template = True
+                break
+            except:
+                pass
 
-    # Draw white rounded rectangle in center for text
-    margin = 80
-    rect_x1, rect_y1 = margin, margin + 50
-    rect_x2, rect_y2 = img_width - margin, img_height - margin - 50
+    # Fallback: Create gradient background
+    if img is None:
+        img = Image.new('RGB', (img_width, img_height), (99, 102, 241))
 
-    # Draw white box with slight transparency effect
-    draw.rounded_rectangle(
-        [(rect_x1, rect_y1), (rect_x2, rect_y2)],
-        radius=20,
-        fill=(255, 255, 255)
-    )
+        # Add gradient effect
+        draw = ImageDraw.Draw(img)
+        for y in range(img_height):
+            r = int(99 + (139 - 99) * y / img_height)
+            g = int(102 + (92 - 102) * y / img_height)
+            b = int(241 + (246 - 241) * y / img_height)
+            draw.line([(0, y), (img_width, y)], fill=(r, g, b))
+
+        # Draw white rounded rectangle in center for text
+        margin = 80
+        rect_x1, rect_y1 = margin, margin + 50
+        rect_x2, rect_y2 = img_width - margin, img_height - margin - 50
+
+        draw.rounded_rectangle(
+            [(rect_x1, rect_y1), (rect_x2, rect_y2)],
+            radius=20,
+            fill=(255, 255, 255)
+        )
+    else:
+        draw = ImageDraw.Draw(img)
 
     # Load font - try system fonts that work on Linux (Streamlit Cloud)
     font_size = 45
