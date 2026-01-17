@@ -1995,8 +1995,8 @@ def generate_cover_image(title: str, template_path: str = None) -> bytes:
 
     # Define text box area (used for both template and fallback)
     margin = 80
-    rect_y1 = margin + 50
-    rect_y2 = img_height - margin - 50
+    rect_y1 = margin + 20  # Moved higher
+    rect_y2 = img_height - margin - 80
 
     # Fallback: Create gradient background
     if img is None:
@@ -2082,15 +2082,6 @@ def generate_cover_image(title: str, template_path: str = None) -> bytes:
         x = (img_width - text_width) // 2
         draw.text((x, current_y), line, font=font, fill=text_color)
         current_y += line_height
-
-    # Add "TruBlog Writer" watermark at bottom
-    try:
-        small_font = ImageFont.truetype(linux_fonts[0] if Path(linux_fonts[0]).exists() else mac_fonts[0], 16)
-    except:
-        small_font = font
-
-    watermark = "Created with TruBlog Writer"
-    draw.text((img_width // 2 - 80, img_height - 35), watermark, font=small_font, fill=(255, 255, 255, 180))
 
     # Save to bytes
     img_buffer = io.BytesIO()
