@@ -1,0 +1,36 @@
+# SEO Blog Generator - Requirements
+# ==================================
+
+# Web Framework
+streamlit==1.31.0
+
+# HTTP Requests
+requests==2.31.0
+aiohttp==3.9.1
+httpx==0.26.0
+
+# HTML/XML Parsing
+beautifulsoup4==4.12.3
+lxml==5.1.0
+
+# AI APIs
+anthropic==0.18.1
+openai==1.12.0
+
+# Data Processing
+pandas==2.2.0
+numpy==1.26.3
+
+# Utilities
+python-dotenv==1.0.1
+tenacity==8.2.3
+tqdm==4.66.1
+
+# Export
+openpyxl==3.1.2
+
+# Image Processing
+Pillow==10.2.0
+
+# Async support
+nest-asyncio==1.6.0

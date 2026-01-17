@@ -1,0 +1,26 @@
+{
+  "company_name": "Trupeer",
+  "company_domain": "trupeer.ai",
+  "additional_domains": [],
+  "competitors": [
+    "Synthesia",
+    "Scribe",
+    "Guidde",
+    "Vidyard",
+    "Loom",
+    "Storylane",
+    "Navattic",
+    "Document360"
+  ],
+  "keywords": [
+    "AI video generator",
+    "Screen recording software",
+    "Training video creator",
+    "Documentation tools"
+  ],
+  "max_blogs": 10,
+  "min_frequency": 2,
+  "min_word_count": 2500,
+  "output_dir": "output",
+  "export_formats": ["json", "csv", "markdown"]
+}
